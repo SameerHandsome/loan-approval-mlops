@@ -1,0 +1,102 @@
+name: 🤖 Local MLflow Retraining + FastAPI Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'requirements.txt'
+  schedule:
+    - cron: "0 12 * * 0"  # retrain every Sunday at 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------
+      # 1️⃣ Checkout Repository
+      # ---------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # 2️⃣ Set up Python
+      # ---------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # ---------------------------
+      # 3️⃣ Install Dependencies
+      # ---------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc[all] optuna scikit-learn pandas mlflow fastapi uvicorn prometheus-client
+
+      # ---------------------------
+      # 4️⃣ Pull DVC Data (Optional)
+      # ---------------------------
+      - name: Pull DVC data
+        run: |
+          if [ -d ".dvc" ]; then
+            dvc pull || echo "⚠️ No DVC remote found."
+          fi
+
+      # ---------------------------
+      # 5️⃣ Run ML Training and Evaluation
+      # ---------------------------
+      - name: Run training and evaluation
+        run: |
+          python src/preprocess.py
+          python src/train.py
+          python src/evaluate.py
+
+      # ---------------------------
+      # 6️⃣ Save Trained Artifacts
+      # ---------------------------
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models
+          path: |
+            mlartifacts/
+            mlruns/
+            src/
+            data/
+
+  deploy:
+    needs: retrain
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---------------------------
+      # 7️⃣ Checkout Repository
+      # ---------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install FastAPI and Uvicorn
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn scikit-learn pandas prometheus-client mlflow
+
+      # ---------------------------
+      # 8️⃣ Start FastAPI App
+      # ---------------------------
+      - name: Run FastAPI app locally
+        run: |
+          nohup uvicorn app:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          echo "✅ FastAPI app started on port 8000"

@@ -1,0 +1,14 @@
+artifact_uri: mlflow-artifacts:/673916559842488609/8db8e98093fa48d0b173fbe028343bcd/artifacts
+end_time: 1762329283366
+entry_point_name: ''
+experiment_id: '673916559842488609'
+lifecycle_stage: active
+run_id: 8db8e98093fa48d0b173fbe028343bcd
+run_name: Decision_Tree_Classifier
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762329277304
+status: 3
+tags: []
+user_id: Administrator

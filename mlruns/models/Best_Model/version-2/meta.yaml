@@ -1,0 +1,15 @@
+creation_timestamp: 1762329283240
+current_stage: Production
+deployment_job_state: null
+description: ''
+last_updated_timestamp: 1762330050454
+model_id: m-15b4612295d844168d6fbfaf9fb135f4
+name: Best_Model
+run_id: 8db8e98093fa48d0b173fbe028343bcd
+run_link: ''
+source: models:/m-15b4612295d844168d6fbfaf9fb135f4
+status: READY
+status_message: null
+storage_location: mlflow-artifacts:/673916559842488609/models/m-15b4612295d844168d6fbfaf9fb135f4/artifacts
+user_id: null
+version: 2
