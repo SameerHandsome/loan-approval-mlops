@@ -10,6 +10,8 @@ import numpy as np
 import os
 
 os.makedirs("mlruns", exist_ok=True)
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("Loan_Approval_Models")
 
 X = pd.read_csv("data/X.csv")
 y = pd.read_csv("data/y.csv").values.ravel()
@@ -17,8 +19,6 @@ y = y.astype(int)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-mlflow.set_tracking_uri("file:./mlruns")
-mlflow.set_experiment("Loan_Approval_Models")
 
 def evaluate_model(model, X_test, y_test):
     preds = model.predict(X_test)
