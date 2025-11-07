@@ -7,6 +7,9 @@ import mlflow
 import mlflow.sklearn
 import optuna
 import numpy as np
+import os
+
+os.makedirs("mlruns", exist_ok=True)
 
 X = pd.read_csv("data/X.csv")
 y = pd.read_csv("data/y.csv").values.ravel()
@@ -14,7 +17,7 @@ y = y.astype(int)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-mlflow.set_tracking_uri("file:///./mlruns")
+mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("Loan_Approval_Models")
 
 def evaluate_model(model, X_test, y_test):
@@ -42,7 +45,7 @@ ridge_acc, ridge_f1, ridge_auc = evaluate_model(best_ridge, X_test, y_test)
 with mlflow.start_run(run_name="Ridge_Classifier"):
     mlflow.log_params({"model": "RidgeClassifier", "alpha": best_ridge_alpha})
     mlflow.log_metrics({"Accuracy": ridge_acc, "F1_Score": ridge_f1, "ROC_AUC": ridge_auc})
-    mlflow.sklearn.log_model(best_ridge, "model", registered_model_name="Best_Model")
+    mlflow.sklearn.log_model(best_ridge, "model")
 
 def dt_objective(trial):
     max_depth = trial.suggest_int("max_depth", 2, 20)
@@ -63,12 +66,12 @@ dt_acc, dt_f1, dt_auc = evaluate_model(best_dt, X_test, y_test)
 with mlflow.start_run(run_name="Decision_Tree_Classifier"):
     mlflow.log_params({"model": "DecisionTreeClassifier", **best_dt_params})
     mlflow.log_metrics({"Accuracy": dt_acc, "F1_Score": dt_f1, "ROC_AUC": dt_auc})
-    mlflow.sklearn.log_model(best_dt, "model", registered_model_name="Best_Model")
+    mlflow.sklearn.log_model(best_dt, "model")
 
 print("\n🔍 Ridge Classifier — Accuracy:", ridge_acc, "| F1:", ridge_f1, "| AUC:", ridge_auc)
 print("🔍 Decision Tree — Accuracy:", dt_acc, "| F1:", dt_f1, "| AUC:", dt_auc)
 
 if ridge_acc > dt_acc:
-    print("\n✅ Ridge Classifier performed better and registered as 'Best_Model'")
+    print("\n✅ Ridge Classifier performed better and saved as Best_Model")
 else:
-    print("\n✅ Decision Tree Classifier performed better and registered as 'Best_Model'")
+    print("\n✅ Decision Tree Classifier performed better and saved as Best_Model")
