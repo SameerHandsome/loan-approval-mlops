@@ -7,7 +7,6 @@ import mlflow
 import mlflow.sklearn
 import optuna
 import numpy as np
-import os
 
 X = pd.read_csv("data/X.csv")
 y = pd.read_csv("data/y.csv").values.ravel()
@@ -15,7 +14,7 @@ y = y.astype(int)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
+mlflow.set_tracking_uri("file:///./mlruns")
 mlflow.set_experiment("Loan_Approval_Models")
 
 def evaluate_model(model, X_test, y_test):
@@ -40,16 +39,10 @@ best_ridge = RidgeClassifier(alpha=best_ridge_alpha)
 best_ridge.fit(X_train, y_train)
 ridge_acc, ridge_f1, ridge_auc = evaluate_model(best_ridge, X_test, y_test)
 
-running_in_ci = os.getenv("GITHUB_ACTIONS") is not None
-example = X_test.iloc[:2]
-
 with mlflow.start_run(run_name="Ridge_Classifier"):
     mlflow.log_params({"model": "RidgeClassifier", "alpha": best_ridge_alpha})
     mlflow.log_metrics({"Accuracy": ridge_acc, "F1_Score": ridge_f1, "ROC_AUC": ridge_auc})
-    if not running_in_ci:
-        mlflow.sklearn.log_model(best_ridge, "model", registered_model_name="Best_Model", input_example=example)
-    else:
-        mlflow.sklearn.log_model(best_ridge, "model", input_example=example)
+    mlflow.sklearn.log_model(best_ridge, "model", registered_model_name="Best_Model")
 
 def dt_objective(trial):
     max_depth = trial.suggest_int("max_depth", 2, 20)
@@ -70,15 +63,12 @@ dt_acc, dt_f1, dt_auc = evaluate_model(best_dt, X_test, y_test)
 with mlflow.start_run(run_name="Decision_Tree_Classifier"):
     mlflow.log_params({"model": "DecisionTreeClassifier", **best_dt_params})
     mlflow.log_metrics({"Accuracy": dt_acc, "F1_Score": dt_f1, "ROC_AUC": dt_auc})
-    if not running_in_ci:
-        mlflow.sklearn.log_model(best_dt, "model", registered_model_name="Best_Model", input_example=example)
-    else:
-        mlflow.sklearn.log_model(best_dt, "model", input_example=example)
+    mlflow.sklearn.log_model(best_dt, "model", registered_model_name="Best_Model")
 
-print("\nRidge Classifier — Accuracy:", ridge_acc, "| F1:", ridge_f1, "| AUC:", ridge_auc)
-print("Decision Tree — Accuracy:", dt_acc, "| F1:", dt_f1, "| AUC:", dt_auc)
+print("\n🔍 Ridge Classifier — Accuracy:", ridge_acc, "| F1:", ridge_f1, "| AUC:", ridge_auc)
+print("🔍 Decision Tree — Accuracy:", dt_acc, "| F1:", dt_f1, "| AUC:", dt_auc)
 
 if ridge_acc > dt_acc:
-    print("\nRidge Classifier performed better and registered as 'Best_Model'")
+    print("\n✅ Ridge Classifier performed better and registered as 'Best_Model'")
 else:
-    print("\nDecision Tree Classifier performed better and registered as 'Best_Model'")
+    print("\n✅ Decision Tree Classifier performed better and registered as 'Best_Model'")
