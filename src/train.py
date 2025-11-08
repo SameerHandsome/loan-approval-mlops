@@ -9,11 +9,10 @@ import optuna
 import joblib
 import os
 
-# ✅ Use a direct path instead of "file:///./mlruns"
+# ✅ Fix: Use file:// URI scheme for local tracking
 mlflow_dir = os.path.abspath("mlruns")
 os.makedirs(mlflow_dir, exist_ok=True)
-
-mlflow.set_tracking_uri(mlflow_dir)
+mlflow.set_tracking_uri(f"file://{mlflow_dir}")
 mlflow.set_experiment("Loan_Approval_Models")
 
 X = pd.read_csv("data/X.csv")
@@ -40,11 +39,10 @@ def ridge_objective(trial):
 
 ridge_study = optuna.create_study(direction="minimize")
 ridge_study.optimize(ridge_objective, n_trials=15)
-
 best_ridge_alpha = ridge_study.best_params["alpha"]
+
 best_ridge = RidgeClassifier(alpha=best_ridge_alpha)
 best_ridge.fit(X_train, y_train)
-
 ridge_acc, ridge_f1, ridge_auc = evaluate_model(best_ridge, X_test, y_test)
 
 with mlflow.start_run(run_name="Ridge_Classifier"):
@@ -54,6 +52,9 @@ with mlflow.start_run(run_name="Ridge_Classifier"):
         "F1_Score": ridge_f1,
         "ROC_AUC": ridge_auc
     })
+    # ✅ Log the model using mlflow's sklearn flavor instead of joblib
+    mlflow.sklearn.log_model(best_ridge, "model")
+    # Optional: Also save as pickle if needed elsewhere
     joblib.dump(best_ridge, "ridge_model.pkl")
     mlflow.log_artifact("ridge_model.pkl")
 
@@ -69,11 +70,10 @@ def dt_objective(trial):
 
 dt_study = optuna.create_study(direction="minimize")
 dt_study.optimize(dt_objective, n_trials=15)
-
 best_dt_params = dt_study.best_params
+
 best_dt = DecisionTreeClassifier(**best_dt_params, random_state=42)
 best_dt.fit(X_train, y_train)
-
 dt_acc, dt_f1, dt_auc = evaluate_model(best_dt, X_test, y_test)
 
 with mlflow.start_run(run_name="Decision_Tree_Classifier"):
@@ -83,6 +83,9 @@ with mlflow.start_run(run_name="Decision_Tree_Classifier"):
         "F1_Score": dt_f1,
         "ROC_AUC": dt_auc
     })
+    # ✅ Log the model using mlflow's sklearn flavor instead of joblib
+    mlflow.sklearn.log_model(best_dt, "model")
+    # Optional: Also save as pickle if needed elsewhere
     joblib.dump(best_dt, "decision_tree_model.pkl")
     mlflow.log_artifact("decision_tree_model.pkl")
 
